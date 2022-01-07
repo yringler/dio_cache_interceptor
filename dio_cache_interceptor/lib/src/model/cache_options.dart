@@ -33,6 +33,9 @@ enum CachePolicy {
   ///
   /// Requests otherwise and caches if response has directives.
   request,
+
+  /// Same as [CachePolicy.forceCache], except it respects [CacheOptions].maxStale
+  ignoreRequest
 }
 
 /// Options to apply to handle request and cache behaviour.

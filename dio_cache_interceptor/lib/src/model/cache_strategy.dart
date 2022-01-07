@@ -41,9 +41,13 @@ class CacheStrategyFactory {
 
   /// Returns a strategy to use assuming the request can use the network.
   Future<CacheStrategy> compute() async {
-    final requestCaching = CacheControl.fromHeader(
-      request.headers[cacheControlHeader],
-    );
+    final requestCaching = cacheOptions.policy != CachePolicy.ignoreRequest ||
+            cacheOptions.maxStale == null ||
+            cacheOptions.maxStale! <= Duration.zero
+        ? CacheControl.fromHeader(
+            request.headers[cacheControlHeader],
+          )
+        : CacheControl(maxStale: cacheOptions.maxStale!.inSeconds);
 
     // Check if we need to return early
     if (!_isCacheable(requestCaching, response)) {
@@ -54,7 +58,8 @@ class CacheStrategyFactory {
     final receivedResponse = response;
     if (receivedResponse != null &&
         cacheResponse == null &&
-        _hasCacheDirectives(receivedResponse)) {
+        (_hasCacheDirectives(receivedResponse) ||
+            cacheOptions.policy == CachePolicy.ignoreRequest)) {
       cacheResponse = await CacheResponse.fromResponse(
         key: cacheOptions.keyBuilder(request),
         options: cacheOptions,
